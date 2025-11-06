@@ -7,6 +7,10 @@ openai.api_key = os.getenv("OPENAI_API_KEY")  # thêm key OpenAI của bạn
 
 app = FastAPI()
 
+@app.get("/")
+def home():
+    return {"message": "API auto giải hình bắt chữ đang hoạt động 🚀"}
+
 def preprocess(img):
     img = img.convert("L")
     img = ImageOps.autocontrast(img)
@@ -27,11 +31,14 @@ async def solve(image: UploadFile = File(...)):
     Hãy suy luận xem đáp án hợp lý nhất là gì. Trả lời ngắn gọn.
     """
 
-    res = openai.ChatCompletion.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.3,
-    )
+    try:
+        res = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+        )
+        answer = res["choices"][0]["message"]["content"]
+    except Exception as e:
+        answer = f"Lỗi khi gọi OpenAI API: {str(e)}"
 
-    answer = res["choices"][0]["message"]["content"].strip()
-    return {"ocr_text": ocr_text, "suggested_answer": answer}
+    return {"ocr_text": ocr_text, "suggestion": answer}
